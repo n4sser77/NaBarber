@@ -1,0 +1,70 @@
+﻿@page "/"
+@rendermode InteractiveServer
+
+<PageTitle>Home</PageTitle>
+
+<div class="map-background">
+    <div class="map-grid"></div>
+</div>
+
+<div class="app-container">
+    <!-- Fixed Header - Native app style -->
+    <header class="app-header">
+        <p class="hero-title">N.A Barber</p>
+        <p class="hero-subtitle">MIDNIGHT ELITE EDITION</p>
+    </header>
+
+    <!-- Spacer to push content below fixed header -->
+    <div class="header-spacer"></div>
+
+    <!-- Bottom Card (thumb-friendly, positioned at bottom) -->
+    <div class="bottom-card">
+        <div class="card-handle"></div>
+
+        <div class="service-header">
+            <span class="label">Vald tjänst</span>
+        </div>
+
+        <div class="service-row" @onclick="OnServiceClick">
+            <div class="service-info">
+                <span class="service-name">Fade cut</span>
+                <span class="service-duration">45 min</span>
+            </div>
+            <span class="service-price">450 :-</span>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="express-section" @onclick="OnExpressClick">
+            <div class="express-badge">
+                <span class="express-icon">⚡</span>
+                <span class="express-label">Express</span>
+            </div>
+            <p class="express-description">Frisören kör direkt till din location</p>
+        </div>
+
+        <div class="button-container">
+            <button type="button" class="order-button" @onclick="OnOrderClick">
+                <span class="button-text">Beställ nu</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    private void OnServiceClick()
+    {
+        // TODO: Navigate to service selection
+    }
+
+    private void OnExpressClick()
+    {
+        // TODO: Toggle express mode
+    }
+
+    private void OnOrderClick()
+    {
+        // TODO: Navigate to order flow
+    }
+}
+

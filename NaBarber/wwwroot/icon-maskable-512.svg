@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- Maskable icon with safe zone (80% inner area) -->
+  <rect width="512" height="512" fill="#1a1a1a"/>
+  <!-- Content within safe zone (centered, ~80% of icon) -->
+  <g transform="translate(51.2, 51.2)">
+    <text x="204.8" y="180" font-family="Arial Black, sans-serif" font-size="64" fill="white" text-anchor="middle" font-weight="bold">N.A</text>
+    <text x="204.8" y="260" font-family="Arial Black, sans-serif" font-size="48" fill="white" text-anchor="middle" font-weight="bold">BARBER</text>
+  </g>
+</svg>

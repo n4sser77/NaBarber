@@ -1,0 +1,84 @@
+﻿<!DOCTYPE html>
+<html lang="sv">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    
+    <!-- PWA & Theme -->
+    <meta name="theme-color" content="#1a1a1a" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    
+    <!-- iOS PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="NA Barber" />
+    
+    <!-- Disable auto-detection -->
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="format-detection" content="date=no" />
+    <meta name="format-detection" content="address=no" />
+    <meta name="format-detection" content="email=no" />
+    
+    <base href="/" />
+    
+    <!-- Manifest -->
+    <link rel="manifest" href="manifest.json" />
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/svg+xml" href="icon-192.svg" />
+    <link rel="apple-touch-icon" href="icon-192.svg" />
+    
+    <!-- iOS Splash Screens - Generated sizes for common devices -->
+    <!-- iPhone 14 Pro Max, 15 Pro Max -->
+    <link rel="apple-touch-startup-image" href="splash-1290x2796.svg" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)" />
+    <!-- iPhone 14 Pro, 15 Pro -->
+    <link rel="apple-touch-startup-image" href="splash-1179x2556.svg" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)" />
+    <!-- iPhone 13/14, 15 -->
+    <link rel="apple-touch-startup-image" href="splash-1170x2532.svg" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)" />
+    <!-- iPhone 13 mini -->
+    <link rel="apple-touch-startup-image" href="splash-1125x2436.svg" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)" />
+    <!-- iPhone SE -->
+    <link rel="apple-touch-startup-image" href="splash-750x1334.svg" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)" />
+    
+    <ResourcePreloader />
+    <link rel="stylesheet" href="@Assets["app.css"]" />
+    <link rel="stylesheet" href="@Assets["NaBarber.styles.css"]" />
+    <ImportMap />
+    <HeadOutlet />
+</head>
+
+<body>
+    <Routes />
+    <ReconnectModal />
+    <script src="@Assets["_framework/blazor.web.js"]"></script>
+    <script src="@Assets["Components/Account/Shared/PasskeySubmit.razor.js"]" type="module"></script>
+    <script>
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then(reg => console.log('SW registered'))
+                .catch(err => console.log('SW failed:', err));
+        }
+        
+        // Prevent pull-to-refresh on iOS
+        document.body.addEventListener('touchmove', function(e) {
+            if (e.target === document.body || e.target === document.documentElement) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        // Disable double-tap zoom
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(e) {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 300) {
+                e.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, { passive: false });
+    </script>
+</body>
+
+</html>

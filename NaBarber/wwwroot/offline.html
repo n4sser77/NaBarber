@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>N.A Barber - Offline</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: hsl(0, 0%, 10%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .logo {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2.5rem;
+            letter-spacing: 2px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            color: hsl(0, 0%, 45%);
+            font-size: 0.7rem;
+            letter-spacing: 4px;
+            margin-bottom: 3rem;
+        }
+        
+        .offline-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            opacity: 0.5;
+        }
+        
+        .message {
+            color: hsl(0, 0%, 60%);
+            font-size: 1rem;
+            line-height: 1.6;
+            max-width: 280px;
+        }
+        
+        .retry-btn {
+            margin-top: 2rem;
+            padding: 1rem 2rem;
+            background: white;
+            color: black;
+            border: none;
+            border-radius: 0.75rem;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <p class="logo">N.A BARBER</p>
+    <p class="subtitle">MIDNIGHT ELITE EDITION</p>
+    <div class="offline-icon">??</div>
+    <p class="message">Du är offline. Kontrollera din internetanslutning och försök igen.</p>
+    <button class="retry-btn" onclick="location.reload()">Försök igen</button>
+</body>
+</html>
