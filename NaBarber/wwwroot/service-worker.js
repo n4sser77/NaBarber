@@ -1,5 +1,5 @@
 // N.A Barber Service Worker
-const CACHE_NAME = 'nabarber-cache-v2';
+const CACHE_NAME = 'nabarber-cache-v3';
 const OFFLINE_URL = '/offline.html';
 
 const STATIC_ASSETS = [

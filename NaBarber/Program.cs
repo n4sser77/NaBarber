@@ -4,12 +4,16 @@ using Microsoft.EntityFrameworkCore;
 using NaBarber.Components;
 using NaBarber.Components.Account;
 using NaBarber.Data;
+using NaBarber.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+// Dispatch service - singleton for shared state
+builder.Services.AddSingleton<DispatchService>();
 
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityRedirectManager>();

@@ -1,0 +1,229 @@
+﻿@page "/admin"
+@rendermode InteractiveServer
+@inject NaBarber.Services.DispatchService Dispatch
+@implements IDisposable
+@inject IJSRuntime JS
+
+<PageTitle>N.A Barber - Admin</PageTitle>
+
+<div class="map-background">
+    <div class="map-grid"></div>
+
+    <!-- Markers container - shares perspective with map -->
+    <div class="markers-container">
+        <!-- Barber location marker (always visible) -->
+        <div class="location-marker barber-marker">
+            <div class="marker-dot"></div>
+            <div class="marker-ring"></div>
+        </div>
+
+        <!-- Incoming request marker (visible when pending) -->
+        @if (State == RequestState.Pending)
+        {
+            <div class="location-marker request-marker animate-in">
+                <div class="marker-dot"></div>
+                <div class="marker-ring pulsing"></div>
+            </div>
+        }
+
+        <!-- Connected requester marker (visible when accepted) -->
+        @if (State == RequestState.Accepted)
+        {
+            <div class="location-marker requester-marker">
+                <div class="marker-dot"></div>
+                <div class="marker-ring"></div>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="app-container">
+    <header class="app-header">
+        <p class="hero-title">N.A Barber</p>
+        <p class="hero-subtitle admin">ADMIN VIEW</p>
+
+        <!-- Demo toggle -->
+        <button class="demo-toggle" @onclick="GoToRequester">
+            <span>KUND</span>
+        </button>
+    </header>
+
+    <div class="header-spacer"></div>
+
+    <!-- Location Permission Banner -->
+    @if (locationDenied)
+    {
+        <div class="permission-banner">
+            <div class="permission-icon">📍</div>
+            <div class="permission-content">
+                <span class="permission-title">Platsåtkomst krävs</span>
+                <p class="permission-text">
+                    Aktivera platsåtkomst. Tryck på 🔒 i adressfältet.
+                </p>
+            </div>
+            <button class="permission-retry" @onclick="FetchLocation">Försök</button>
+        </div>
+    }
+
+    <!-- Bottom Card - State Driven -->
+    <div class="bottom-card @State.ToString().ToLower()">
+        <div class="card-handle"></div>
+
+        @if (State == RequestState.Idle)
+        {
+            <!-- IDLE STATE: Waiting for requests -->
+            <div class="card-content idle-content">
+                <div class="status-indicator">
+                    <span class="status-icon idle"></span>
+                    <span class="status-text">Väntar på förfrågningar</span>
+                </div>
+                <p class="status-subtext">@(hasLocation ? "Du är online och synlig för kunder" : "Hämtar din position...")</p>
+            </div>
+        }
+        else if (State == RequestState.Pending && Request != null)
+        {
+            <!-- PENDING STATE: Incoming request -->
+            <div class="card-content request-content">
+                <div class="request-header">
+                    <span class="request-badge">NY FÖRFRÅGAN</span>
+                </div>
+
+                <div class="request-info">
+                    <div class="request-service">
+                        <span class="service-name">Fade Cut</span>
+                        <span class="service-price">450 :-</span>
+                    </div>
+                    <div class="request-meta">
+                        <span class="request-id">Kund #@Request.Id</span>
+                        <span class="request-distance">~1.2 km</span>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button type="button" class="decline-button" @onclick="DeclineRequest">
+                        <span>Avböj</span>
+                    </button>
+                    <button type="button" class="accept-button" @onclick="AcceptRequest">
+                        <span>Acceptera</span>
+                    </button>
+                </div>
+            </div>
+        }
+        else if (State == RequestState.Accepted && Request != null)
+        {
+            <!-- ACCEPTED STATE: On the way -->
+            <div class="card-content active-content">
+                <div class="status-indicator success">
+                    <span class="status-icon"></span>
+                    <span class="status-text">På väg till kund</span>
+                </div>
+
+                <div class="customer-info">
+                    <div class="customer-details">
+                        <span class="customer-id">Kund #@Request.Id</span>
+                        <span class="service-type">Fade Cut • 450 :-</span>
+                    </div>
+                    <span class="eta">ETA: 8 min</span>
+                </div>
+
+                <!-- Directions button -->
+                <a href="@GetDirectionsUrl()" target="_blank" rel="noopener" class="directions-button">
+                    <span class="directions-icon"></span>
+                    <span>Öppna vägbeskrivning</span>
+                </a>
+
+                <button type="button" class="complete-button" @onclick="CompleteSession">
+                    <span>Slutför session</span>
+                </button>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private RequestState State => Dispatch.State;
+    private CutRequest? Request => Dispatch.CurrentRequest;
+    private Location? barberLocation;
+    private bool hasLocation => barberLocation != null;
+    private bool locationDenied = false;
+
+    protected override void OnInitialized()
+    {
+        Dispatch.OnStateChanged += HandleStateChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await FetchLocation();
+        }
+    }
+
+    private async Task FetchLocation()
+    {
+        locationDenied = false;
+        try
+        {
+            barberLocation = await JS.InvokeAsync<Location>("getGeolocation");
+            Dispatch.UpdateBarberLocation(barberLocation);
+        }
+        catch (JSException ex) when (ex.Message.Contains("denied", StringComparison.OrdinalIgnoreCase))
+        {
+            locationDenied = true;
+            barberLocation = new Location(); // Default Stockholm
+        }
+        catch
+        {
+            barberLocation = new Location(); // Default Stockholm
+        }
+        StateHasChanged();
+    }
+
+    private void HandleStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void AcceptRequest()
+    {
+        if (barberLocation != null)
+        {
+            Dispatch.UpdateBarberLocation(barberLocation);
+        }
+        Dispatch.AcceptRequest();
+    }
+
+    private void DeclineRequest()
+    {
+        Dispatch.DeclineRequest();
+    }
+
+    private void CompleteSession()
+    {
+        Dispatch.CompleteSession();
+    }
+
+    private void GoToRequester()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+
+    private string GetDirectionsUrl()
+    {
+        if (Request == null) return "#";
+        
+        var lat = Request.RequesterLocation.Latitude;
+        var lng = Request.RequesterLocation.Longitude;
+        
+        // geo: URI opens the default map app on iOS/Android
+        return $"maps://?q={lat},{lng}";
+    }
+
+    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+
+    public void Dispose()
+    {
+        Dispatch.OnStateChanged -= HandleStateChanged;
+    }
+}

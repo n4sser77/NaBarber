@@ -1,70 +1,210 @@
 ﻿@page "/"
 @rendermode InteractiveServer
+@inject NaBarber.Services.DispatchService Dispatch
+@implements IDisposable
+@inject IJSRuntime JS
 
-<PageTitle>Home</PageTitle>
+<PageTitle>N.A Barber</PageTitle>
 
 <div class="map-background">
     <div class="map-grid"></div>
+    
+    <!-- Markers container - shares perspective with map -->
+    <div class="markers-container">
+        <!-- User location marker (always visible) -->
+        <div class="location-marker user-marker @(State == RequestState.Pending ? "pulsing" : "")">
+            <div class="marker-dot"></div>
+            <div class="marker-ring"></div>
+        </div>
+
+        <!-- Barber marker (visible when accepted) -->
+        @if (State == RequestState.Accepted)
+        {
+            <div class="location-marker barber-marker">
+                <div class="marker-dot"></div>
+                <div class="marker-ring"></div>
+            </div>
+        }
+    </div>
 </div>
 
 <div class="app-container">
-    <!-- Fixed Header - Native app style -->
     <header class="app-header">
         <p class="hero-title">N.A Barber</p>
         <p class="hero-subtitle">MIDNIGHT ELITE EDITION</p>
+
+        <!-- Demo toggle -->
+        <button class="demo-toggle" @onclick="GoToAdmin">
+            <span>ADMIN</span>
+        </button>
     </header>
 
-    <!-- Spacer to push content below fixed header -->
     <div class="header-spacer"></div>
 
-    <!-- Bottom Card (thumb-friendly, positioned at bottom) -->
-    <div class="bottom-card">
-        <div class="card-handle"></div>
-
-        <div class="service-header">
-            <span class="label">Vald tjänst</span>
-        </div>
-
-        <div class="service-row" @onclick="OnServiceClick">
-            <div class="service-info">
-                <span class="service-name">Fade cut</span>
-                <span class="service-duration">45 min</span>
+    <!-- Location Permission Banner -->
+    @if (locationDenied)
+    {
+        <div class="permission-banner">
+            <div class="permission-icon">📍</div>
+            <div class="permission-content">
+                <span class="permission-title">Platsåtkomst krävs</span>
+                <p class="permission-text">
+                    Aktivera platsåtkomst för att beställa. Tryck på 🔒 i adressfältet och aktivera "Plats".
+                </p>
             </div>
-            <span class="service-price">450 :-</span>
+            <button class="permission-retry" @onclick="RetryLocation">Försök igen</button>
         </div>
+    }
 
-        <div class="divider"></div>
+    <!-- Bottom Card - State Driven -->
+    <div class="bottom-card @CardStateClass">
+        <div class="card-handle" @onclick="ToggleCard"></div>
 
-        <div class="express-section" @onclick="OnExpressClick">
-            <div class="express-badge">
-                <span class="express-icon">⚡</span>
-                <span class="express-label">Express</span>
+        @if (State == RequestState.Idle)
+        {
+            <!-- IDLE STATE: Show service selection and request button -->
+            <div class="card-content idle-content">
+                <div class="service-header">
+                    <span class="label">Vald tjänst</span>
+                </div>
+
+                <div class="service-row">
+                    <div class="service-info">
+                        <span class="service-name">Fade cut</span>
+                        <span class="service-duration">45 min</span>
+                    </div>
+                    <span class="service-price">450 :-</span>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="express-section">
+                    <div class="express-badge">
+                        <span class="express-icon">⚡</span>
+                        <span class="express-label">Express</span>
+                    </div>
+                    <p class="express-description">Frisören kör direkt till din location</p>
+                </div>
+
+                <div class="button-container">
+                    <button type="button" class="order-button" @onclick="RequestCut" disabled="@isRequesting">
+                        <span class="button-text">@(isRequesting ? "Hämtar plats..." : "Beställ nu")</span>
+                    </button>
+                </div>
             </div>
-            <p class="express-description">Frisören kör direkt till din location</p>
-        </div>
+        }
+        else if (State == RequestState.Pending)
+        {
+            <!-- PENDING STATE: Waiting for barber -->
+            <div class="card-content pending-content">
+                <div class="status-indicator">
+                    <div class="spinner"></div>
+                    <span class="status-text">Letar efter frisör...</span>
+                </div>
+                <p class="status-subtext">Din förfrågan är aktiv</p>
 
-        <div class="button-container">
-            <button type="button" class="order-button" @onclick="OnOrderClick">
-                <span class="button-text">Beställ nu</span>
-            </button>
-        </div>
+                <button type="button" class="cancel-button" @onclick="CancelRequest">
+                    <span>Avbryt</span>
+                </button>
+            </div>
+        }
+        else if (State == RequestState.Accepted)
+        {
+            <!-- ACCEPTED STATE: Barber on the way -->
+            <div class="card-content accepted-content">
+                <div class="status-indicator success">
+                    <span class="status-icon">✓</span>
+                    <span class="status-text">Frisören är på väg</span>
+                </div>
+                <p class="status-subtext">Beräknad ankomst: 8 min</p>
+
+                <div class="barber-info">
+                    <div class="barber-avatar">NA</div>
+                    <div class="barber-details">
+                        <span class="barber-name">N.A Barber</span>
+                        <span class="barber-rating">★ 4.9</span>
+                    </div>
+                </div>
+            </div>
+        }
     </div>
 </div>
 
 @code {
-    private void OnServiceClick()
+    private bool isCardMinimized = false;
+    private bool locationDenied = false;
+    private bool isRequesting = false;
+    private RequestState State => Dispatch.State;
+
+    private string CardStateClass =>
+        (isCardMinimized ? "minimized " : "") +
+        State.ToString().ToLower();
+
+    protected override void OnInitialized()
     {
-        // TODO: Navigate to service selection
+        Dispatch.OnStateChanged += HandleStateChanged;
     }
 
-    private void OnExpressClick()
+    private void HandleStateChanged()
     {
-        // TODO: Toggle express mode
+        InvokeAsync(StateHasChanged);
     }
 
-    private void OnOrderClick()
+    private void ToggleCard()
     {
-        // TODO: Navigate to order flow
+        isCardMinimized = !isCardMinimized;
+    }
+
+    private async Task RequestCut()
+    {
+        if (isRequesting) return;
+        
+        isRequesting = true;
+        locationDenied = false;
+        
+        try
+        {
+            var location = await JS.InvokeAsync<Location>("getGeolocation");
+            Dispatch.RequestCut(location);
+            isCardMinimized = false;
+        }
+        catch (JSException ex) when (ex.Message.Contains("denied", StringComparison.OrdinalIgnoreCase))
+        {
+            locationDenied = true;
+        }
+        catch (JSException)
+        {
+            // Other geolocation errors - use default location
+            Dispatch.RequestCut(new Location());
+            isCardMinimized = false;
+        }
+        finally
+        {
+            isRequesting = false;
+        }
+    }
+
+    private async Task RetryLocation()
+    {
+        locationDenied = false;
+        await RequestCut();
+    }
+
+    private void CancelRequest()
+    {
+        Dispatch.Reset();
+    }
+
+    private void GoToAdmin()
+    {
+        NavigationManager.NavigateTo("/admin");
+    }
+
+    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+
+    public void Dispose()
+    {
+        Dispatch.OnStateChanged -= HandleStateChanged;
     }
 }
 
