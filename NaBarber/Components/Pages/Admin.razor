@@ -217,7 +217,7 @@
         var lng = Request.RequesterLocation.Longitude;
         
         // geo: URI opens the default map app on iOS/Android
-        return $"maps://?q={lat},{lng}";
+        return $"maps://?daddr=={lat},{lng}";
     }
 
     [Inject] private NavigationManager NavigationManager { get; set; } = default!;
